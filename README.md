@@ -1,3 +1,20 @@
+> ## 🔱 Fork notice
+>
+> This is a community **fork of [qodo-ai/pr-agent](https://github.com/qodo-ai/pr-agent)** (Apache-2.0).
+> It is **not** affiliated with or endorsed by Qodo — all credit for the original project
+> goes to its authors and contributors.
+>
+> **What this fork adds:** a **CLI/OAuth AI handler** so PR review runs on your
+> **chat/CLI subscription** (Claude Max via the `claude` CLI, ChatGPT Pro via the `codex` CLI)
+> instead of an **API key** — useful when you only have a subscription (no pay-per-token API
+> quota) or hit the GitHub Copilot review quota.
+>
+> See **[`CHANGES.md`](CHANGES.md)** for the full list of fork changes and
+> **[`docs/oauth-cli-mode.md`](docs/oauth-cli-mode.md)** for usage.
+> The original upstream README follows below, unchanged.
+
+---
+
 
 
 <br />
