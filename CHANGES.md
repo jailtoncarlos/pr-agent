@@ -23,9 +23,19 @@ Changes made in **this fork** relative to upstream
   secret, and known constraints.
 - `NOTICE`, `CHANGES.md`, README fork notice — fork attribution / Apache-2.0 hygiene.
 
+### Added — Reusable GitHub Action ([#1](https://github.com/jailtoncarlos/pr-agent/issues/1))
+
+- `action.yml` (composite) — runs the reviewer on a PR. Usable **directly** in a
+  single repo (`uses: jailtoncarlos/pr-agent@<sha>`) **or** from an org-anchor
+  reusable workflow. Installs the Claude CLI, authenticates via
+  `claude_code_oauth_token`, installs this fork, runs the review on the subscription.
+- `pr_agent/servers/cli_action_runner.py` — Action entrypoint: selects the CLI
+  handler (from env) and runs the standard PR-Agent action flow.
+- `docs/examples/single-repo-pr-review.yml` — drop-in workflow for one repo.
+- `docs/examples/org-anchor-reusable-workflow.yml` — anchor reusable workflow +
+  caller / Organization Ruleset for org-wide governance.
+
 ### Planned
 
-- `action.yml` — package the reviewer as a reusable GitHub Action (tracked in
-  [#1](https://github.com/jailtoncarlos/pr-agent/issues/1)).
-- Org-wide anchor-governance examples (anchor reusable workflow + Organization
-  Ruleset) for applying the reviewer across all repos of an organization.
+- End-to-end validation on a real PR — main risk is structured-output reliability
+  via the CLI (no API `response_format`).

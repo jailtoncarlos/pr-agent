@@ -41,6 +41,28 @@ pass_prompt_via = "stdin"   # ou "arg"
 
 Depois rode normalmente (ex.: `python -m pr_agent.cli --pr_url <URL> review`).
 
+## Rodar como GitHub Action
+
+Este fork inclui um `action.yml` (composite) que empacota o reviewer. Em qualquer
+repo, `.github/workflows/pr-review.yml`:
+
+```yaml
+on: { pull_request: { types: [opened, synchronize, reopened] } }
+permissions: { pull-requests: write, contents: read }
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: jailtoncarlos/pr-agent@<COMMIT_SHA>
+        with:
+          cli_command: "claude -p"
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+```
+
+Exemplos prontos: `docs/examples/single-repo-pr-review.yml` (repo avulso) e
+`docs/examples/org-anchor-reusable-workflow.yml` (governança org-wide a partir de
+um repo-âncora).
+
 ## Onde roda — a auth da assinatura precisa estar no ambiente
 
 O `claude`/`codex` autenticam pela **sessão OAuth** da assinatura. Ela precisa

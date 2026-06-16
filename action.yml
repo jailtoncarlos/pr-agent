@@ -1,0 +1,57 @@
+name: "PR review on subscription (CLI/OAuth)"
+description: "AI PR review running on your Claude Code / Codex subscription (no API key, no Copilot quota)."
+author: "jailtoncarlos (fork of qodo-ai/pr-agent)"
+branding:
+  icon: "git-pull-request"
+  color: "purple"
+
+inputs:
+  cli_command:
+    description: "Subscription CLI driven in headless mode (e.g. 'claude -p' or 'codex exec')."
+    required: false
+    default: "claude -p"
+  cli_timeout_seconds:
+    description: "Timeout (seconds) per CLI call."
+    required: false
+    default: "300"
+  claude_code_oauth_token:
+    description: "Claude Code OAuth token (from `claude setup-token`) for headless/CI auth on the subscription. Pass via a secret."
+    required: false
+    default: ""
+  install_claude_cli:
+    description: "Install the Claude Code CLI via npm. Set 'false' if it's already present or you use codex."
+    required: false
+    default: "true"
+  python_version:
+    description: "Python version used to run pr-agent."
+    required: false
+    default: "3.12"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python_version }}
+
+    - name: Install Claude Code CLI
+      if: ${{ inputs.install_claude_cli == 'true' }}
+      shell: bash
+      run: npm install -g @anthropic-ai/claude-code
+
+    - name: Install pr-agent (this fork)
+      shell: bash
+      run: pip install --no-cache-dir "${{ github.action_path }}"
+
+    - name: Run PR review on the subscription
+      shell: bash
+      env:
+        # Auth da assinatura — lida pelo próprio CLI (Claude Code).
+        CLAUDE_CODE_OAUTH_TOKEN: ${{ inputs.claude_code_oauth_token }}
+        # Config do handler CLI (lida por cli_action_runner.py).
+        PR_AGENT_AI_HANDLER: "cli"
+        PR_AGENT_CLI_COMMAND: ${{ inputs.cli_command }}
+        PR_AGENT_CLI_TIMEOUT: ${{ inputs.cli_timeout_seconds }}
+        # GITHUB_TOKEN e GITHUB_EVENT_* são fornecidos pelo runner do GitHub.
+      run: python -m pr_agent.servers.cli_action_runner

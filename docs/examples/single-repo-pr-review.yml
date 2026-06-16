@@ -1,0 +1,28 @@
+# Example: AI PR review on your subscription, for a SINGLE repository.
+#
+# Copy this to `.github/workflows/pr-review.yml` in any repo (e.g.
+# jailtoncarlos/incident-analyst-agent). No anchor/org needed.
+#
+# Prerequisite: a secret `CLAUDE_CODE_OAUTH_TOKEN` in the repo (or your account),
+# generated with `claude setup-token` (Claude Max subscription).
+#
+# Pin the action to a commit SHA (recommended) instead of @main.
+
+name: PR review (AI, subscription)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest   # or a self-hosted runner already logged into the CLI
+    steps:
+      - uses: jailtoncarlos/pr-agent@<COMMIT_SHA>   # pin to a SHA
+        with:
+          cli_command: "claude -p"
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
