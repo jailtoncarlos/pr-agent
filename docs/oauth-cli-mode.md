@@ -1,49 +1,50 @@
-# Modo OAuth/CLI de assinatura (Claude Code / Codex) — sem API key
+# OAuth/CLI subscription mode (Claude Code / Codex) — no API key
 
-Este fork adiciona um **AI handler** que roda a revisão de PR na **cota da sua
-assinatura de chat/CLI** (Claude Max via `claude` CLI, ChatGPT Pro via `codex`
-CLI), em vez de uma **API key** (pay-per-token). Resolve o caso de quem **só tem
-assinatura** (sem cota de API) e/ou esbarrou na **cota do GitHub Copilot**.
+This fork adds an **AI handler** that runs PR review on your **chat/CLI
+subscription quota** (Claude Max via the `claude` CLI, ChatGPT Pro via the
+`codex` CLI), instead of an **API key** (pay-per-token). It solves the case of
+having only a subscription (no API quota) and/or hitting the **GitHub Copilot
+review quota**.
 
-## Por quê
+## Why
 
-O PR-Agent original consome o LLM via **API key** (`litellm` → API OpenAI/Anthropic).
-Uma **assinatura de chat/CLI** é **OAuth**, não API — alimenta os apps e os
-clientes de terminal, mas **não expõe API key**. A única forma de aproveitar a
-assinatura é **dirigir o CLI logado** em modo headless.
+Upstream PR-Agent talks to the LLM via an **API key** (`litellm` → OpenAI/Anthropic
+API). A **chat/CLI subscription** is **OAuth**, not API — it powers the chat apps
+and the terminal clients, but does **not** expose an API key. The only way to use
+the subscription is to **drive the logged-in CLI** in headless mode.
 
-## Como funciona
+## How it works
 
-`CliAiHandler` (`pr_agent/algo/ai_handlers/cli_ai_handler.py`) implementa a
-interface `BaseAiHandler.chat_completion(...)` rodando o CLI como subprocess: o
-prompt (system + user que o PR-Agent já monta) vai por `stdin`, e a resposta é o
-`stdout`. **Todo o resto do pipeline do PR-Agent é reaproveitado** — representação
-de diff em hunks, prompts, post inline via Reviews API, review incremental.
+`CliAiHandler` (`pr_agent/algo/ai_handlers/cli_ai_handler.py`) implements the
+`BaseAiHandler.chat_completion(...)` interface by running the CLI as a subprocess:
+the prompt (the system + user message that PR-Agent already builds) goes in via
+`stdin`, and the response is `stdout`. **The rest of the PR-Agent pipeline is
+reused** — diff hunking, prompts, inline posting via the Reviews API, incremental
+review.
 
 ```
-trigger → diff em hunks → prompt (.toml) → CliAiHandler → claude -p / codex exec
-        → resposta → parse → post inline (Reviews API)
+trigger → diff hunks → prompt (.toml) → CliAiHandler → claude -p / codex exec
+        → response → parse → post inline (Reviews API)
 ```
 
-## Como ativar
+## How to enable
 
-Em `configuration.toml` (ou no `.pr_agent.toml` do seu repo):
+In `configuration.toml` (or your repo's `.pr_agent.toml`):
 
 ```toml
 [config]
-ai_handler = "cli"          # default é "litellm" (API key)
+ai_handler = "cli"          # default is "litellm" (API key)
 
 [cli_ai]
-command = "claude -p"       # ou "codex exec"
+command = "claude -p"       # or "codex exec"
 timeout_seconds = 300
-pass_prompt_via = "stdin"   # ou "arg"
 ```
 
-Depois rode normalmente (ex.: `python -m pr_agent.cli --pr_url <URL> review`).
+Then run as usual (e.g. `python -m pr_agent.cli --pr_url <URL> review`).
 
-## Rodar como GitHub Action
+## Run as a GitHub Action
 
-Este fork inclui um `action.yml` (composite) que empacota o reviewer. Em qualquer
+This fork ships an `action.yml` (composite) that packages the reviewer. In any
 repo, `.github/workflows/pr-review.yml`:
 
 ```yaml
@@ -59,47 +60,48 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
 
-Exemplos prontos: `docs/examples/single-repo-pr-review.yml` (repo avulso) e
-`docs/examples/org-anchor-reusable-workflow.yml` (governança org-wide a partir de
-um repo-âncora).
+Ready-made examples: `docs/examples/single-repo-pr-review.yml` (single repo) and
+`docs/examples/org-anchor-reusable-workflow.yml` (org-wide governance from an
+anchor repo).
 
-## Onde roda — a auth da assinatura precisa estar no ambiente
+## Where it runs — the subscription auth must be available in the environment
 
-O `claude`/`codex` autenticam pela **sessão OAuth** da assinatura. Ela precisa
-estar disponível onde o PR-Agent roda. Há dois cenários — **inclusive CI na
-nuvem**:
+The `claude`/`codex` CLIs authenticate through the subscription's **OAuth
+session**. That session must be present where pr-agent runs. Two scenarios — **CI
+included**:
 
 ### Local / self-hosted runner
-✅ Direto — basta o CLI estar logado (`claude` / `codex login`).
+✅ Direct — the CLI just needs to be logged in (`claude` / `codex login`).
 
-### GitHub-hosted runner (CI na nuvem) — ✅ com o token da assinatura como *secret*
-Não há sessão por default, mas você **injeta a credencial via secret**; o handler
-é o mesmo, só o **workflow** muda (instala o CLI + fornece a auth):
+### GitHub-hosted runner (cloud CI) — ✅ with the subscription token as a *secret*
+There is no session by default, but you **inject the credential via a secret**;
+the handler is the same, only the **workflow** changes (install the CLI + provide
+the auth):
 
-- **Claude Code (mecanismo oficial para CI)**: gere um token OAuth de longa
-  duração com `claude setup-token` (atrelado à assinatura Max) e guarde como
-  secret (ex.: `CLAUDE_CODE_OAUTH_TOKEN`). O `claude` lê esse env var e roda na
-  assinatura no runner GitHub-hosted. *(Confirme o nome exato do comando/env var
-  na doc atual do Claude Code.)*
-- **Codex (ChatGPT Pro)**: restaure a credencial do `codex login`
-  (ex.: `~/.codex/auth.json`) a partir de um secret antes de rodar. Funciona, mas
-  é menos oficial que o `setup-token` do Claude.
+- **Claude Code (official CI mechanism)**: generate a long-lived OAuth token with
+  `claude setup-token` (tied to the Max subscription) and store it as a secret
+  (e.g. `CLAUDE_CODE_OAUTH_TOKEN`). The `claude` CLI reads that env var and runs
+  on the subscription on a GitHub-hosted runner. *(Confirm the exact
+  command/env-var name in the current Claude Code docs.)*
+- **Codex (ChatGPT Pro)**: restore the credential from `codex login`
+  (e.g. `~/.codex/auth.json`) from a secret before running. Works, but less
+  official than Claude's `setup-token`.
 
-### Caveats da auth em CI
-- **Ciclo do token**: o token de CI expira / pode ser revogado → rotacione o secret.
-- **ToS**: o `claude setup-token` é oferecido pela Anthropic para automação/CI
-  (uso previsto). Para **Codex/ChatGPT Pro**, uso headless em CI é zona mais
-  cinzenta — verifique os termos da OpenAI antes.
-- **Segurança**: o token **é a sua conta** — trate o secret com cuidado (escopo,
-  quem tem acesso ao repo).
+### CI auth caveats
+- **Token lifecycle**: the CI token expires / can be revoked → rotate the secret.
+- **ToS**: `claude setup-token` is provided by Anthropic for automation/CI
+  (intended use). For **Codex/ChatGPT Pro**, headless CI use is a grayer area —
+  check OpenAI's terms first.
+- **Security**: the token **is your account** — treat the secret carefully
+  (scope, who can access the repo).
 
-## Limitações conhecidas
+## Known limitations
 
-- **Saída estruturada**: os prompts pedem YAML/JSON; o CLI produz, mas sem o
-  `response_format` da API — pode exigir prompts mais firmes / parsing robusto.
-- **`model`** é ignorado (o CLI usa o modelo da assinatura); a contagem de tokens
-  (`tiktoken`) vira aproximação para a compressão de diff.
-- **Latência**: há custo de startup do CLI por chamada.
+- **Structured output**: the prompts ask for YAML/JSON; the CLI produces it, but
+  without the API's `response_format` — may need firmer prompts / robust parsing.
+- **`model`** is ignored (the CLI uses the subscription model); token counting
+  (`tiktoken`) becomes an approximation for diff compression.
+- **Latency**: there is CLI startup cost per call.
 
-> Status: handler de integração. A viabilidade ponta-a-ponta (qualidade da saída
-> estruturada via CLI) deve ser validada num PR real antes de uso em produção.
+> Status: integration handler. End-to-end viability (structured-output quality via
+> the CLI) should be validated on a real PR before production use.

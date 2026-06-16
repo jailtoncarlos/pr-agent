@@ -47,11 +47,11 @@ runs:
     - name: Run PR review on the subscription
       shell: bash
       env:
-        # Auth da assinatura — lida pelo próprio CLI (Claude Code).
+        # Subscription auth — read by the CLI itself (Claude Code).
         CLAUDE_CODE_OAUTH_TOKEN: ${{ inputs.claude_code_oauth_token }}
-        # Config do handler CLI (lida por cli_action_runner.py).
+        # CLI handler config (read by cli_action_runner.py).
         PR_AGENT_AI_HANDLER: "cli"
         PR_AGENT_CLI_COMMAND: ${{ inputs.cli_command }}
         PR_AGENT_CLI_TIMEOUT: ${{ inputs.cli_timeout_seconds }}
-        # GITHUB_TOKEN e GITHUB_EVENT_* são fornecidos pelo runner do GitHub.
+        # GITHUB_TOKEN and GITHUB_EVENT_* are provided by the GitHub runner.
       run: python -m pr_agent.servers.cli_action_runner

@@ -1,19 +1,18 @@
-"""GitHub Action entrypoint para o handler CLI/OAuth (fork).
+"""GitHub Action entrypoint for the CLI/OAuth handler (fork).
 
-Wrapper fino sobre ``github_action_runner.run_action()``: seleciona o
-``CliAiHandler`` e o configura a partir de variáveis de ambiente definidas pelo
-``action.yml``, e então roda o fluxo padrão de Action do PR-Agent (lê o PR do
-evento e posta a revisão). Faz a revisão rodar numa **assinatura de chat/CLI**
-(Claude Code / Codex) em vez de uma API key.
+Thin wrapper around ``github_action_runner.run_action()``: selects the
+``CliAiHandler`` and configures it from environment variables set by
+``action.yml``, then runs the standard PR-Agent action flow (reads the PR from
+the event and posts the review). Makes the review run on a **chat/CLI
+subscription** (Claude Code / Codex) instead of an API key.
 
-Variáveis de ambiente lidas (definidas pelo action.yml):
-- ``PR_AGENT_AI_HANDLER``       (default "cli")
-- ``PR_AGENT_CLI_COMMAND``      (default "claude -p")
-- ``PR_AGENT_CLI_TIMEOUT``      (default "300")
-- ``PR_AGENT_CLI_PASS_PROMPT_VIA`` (default "stdin")
+Environment variables read (set by action.yml):
+- ``PR_AGENT_AI_HANDLER``  (default "cli")
+- ``PR_AGENT_CLI_COMMAND`` (default "claude -p")
+- ``PR_AGENT_CLI_TIMEOUT`` (default "300")
 
-Auth da assinatura (ex.: ``CLAUDE_CODE_OAUTH_TOKEN``) é lida pelo próprio CLI —
-o action.yml a exporta no ambiente.
+Subscription auth (e.g. ``CLAUDE_CODE_OAUTH_TOKEN``) is read by the CLI itself —
+action.yml exports it into the environment.
 """
 import asyncio
 import os
@@ -30,8 +29,6 @@ def _configure_cli_handler() -> None:
                  os.environ.get("PR_AGENT_CLI_COMMAND", "claude -p"))
     settings.set("CLI_AI.TIMEOUT_SECONDS",
                  os.environ.get("PR_AGENT_CLI_TIMEOUT", "300"))
-    settings.set("CLI_AI.PASS_PROMPT_VIA",
-                 os.environ.get("PR_AGENT_CLI_PASS_PROMPT_VIA", "stdin"))
 
 
 def main() -> None:

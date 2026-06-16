@@ -35,6 +35,15 @@ Changes made in **this fork** relative to upstream
 - `docs/examples/org-anchor-reusable-workflow.yml` — anchor reusable workflow +
   caller / Organization Ruleset for org-wide governance.
 
+### Changed — port reference-impl (forje) lessons into `CliAiHandler`
+
+- Always send the prompt via **stdin** (removed the `pass_prompt_via` / "arg"
+  option): argv overflows `ARG_MAX` on large diffs (`Argument list too long`).
+- Add `--skip-git-repo-check` automatically when the command is `codex`, so
+  `codex exec` works outside a git repo / in CI (fixes a latent break for the
+  cross-model case in [#1](https://github.com/jailtoncarlos/pr-agent/issues/1)).
+- All fork-added code comments/docs are in English.
+
 ### Planned
 
 - End-to-end validation on a real PR — main risk is structured-output reliability

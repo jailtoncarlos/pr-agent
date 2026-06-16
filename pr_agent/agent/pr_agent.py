@@ -49,10 +49,10 @@ commands = list(command2class.keys())
 
 
 def _resolve_ai_handler():
-    """Seleciona o AI handler por config (``[config] ai_handler``).
+    """Select the AI handler from config (``[config] ai_handler``).
 
-    - ``"litellm"`` (default) → API key (pay-per-token), via LiteLLM.
-    - ``"cli"``               → CLI de assinatura (OAuth): Claude Code / Codex.
+    - ``"litellm"`` (default) -> API key (pay-per-token), via LiteLLM.
+    - ``"cli"``               -> subscription CLI (OAuth): Claude Code / Codex.
     """
     handler = str(get_settings().get("CONFIG.AI_HANDLER", "litellm")).lower()
     if handler == "cli":
@@ -63,7 +63,7 @@ def _resolve_ai_handler():
 
 class PRAgent:
     def __init__(self, ai_handler: partial[BaseAiHandler,] = None):
-        # Se não for injetado explicitamente, resolve por config (litellm | cli).
+        # If not injected explicitly, resolve from config (litellm | cli).
         self.ai_handler = ai_handler or _resolve_ai_handler()  # init in run_action
 
     async def _handle_request(self, pr_url, request, notify=None) -> bool:
