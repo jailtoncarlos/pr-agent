@@ -41,16 +41,35 @@ pass_prompt_via = "stdin"   # ou "arg"
 
 Depois rode normalmente (ex.: `python -m pr_agent.cli --pr_url <URL> review`).
 
-## ⚠️ Restrição importante (inerente ao OAuth de assinatura)
+## Onde roda — a auth da assinatura precisa estar no ambiente
 
-O `claude`/`codex` autenticam pela **sessão logada** da assinatura. Logo, isto
-roda onde o CLI está autenticado:
+O `claude`/`codex` autenticam pela **sessão OAuth** da assinatura. Ela precisa
+estar disponível onde o PR-Agent roda. Há dois cenários — **inclusive CI na
+nuvem**:
 
-- ✅ **Sua máquina local** ou **self-hosted runner** onde você fez login no CLI.
-- ❌ **Runner cloud padrão** (GitHub-hosted Action): não há sessão de assinatura.
+### Local / self-hosted runner
+✅ Direto — basta o CLI estar logado (`claude` / `codex login`).
 
-Para CI hospedado, ou se mantém o `litellm` (API key), ou usa um self-hosted
-runner já autenticado.
+### GitHub-hosted runner (CI na nuvem) — ✅ com o token da assinatura como *secret*
+Não há sessão por default, mas você **injeta a credencial via secret**; o handler
+é o mesmo, só o **workflow** muda (instala o CLI + fornece a auth):
+
+- **Claude Code (mecanismo oficial para CI)**: gere um token OAuth de longa
+  duração com `claude setup-token` (atrelado à assinatura Max) e guarde como
+  secret (ex.: `CLAUDE_CODE_OAUTH_TOKEN`). O `claude` lê esse env var e roda na
+  assinatura no runner GitHub-hosted. *(Confirme o nome exato do comando/env var
+  na doc atual do Claude Code.)*
+- **Codex (ChatGPT Pro)**: restaure a credencial do `codex login`
+  (ex.: `~/.codex/auth.json`) a partir de um secret antes de rodar. Funciona, mas
+  é menos oficial que o `setup-token` do Claude.
+
+### Caveats da auth em CI
+- **Ciclo do token**: o token de CI expira / pode ser revogado → rotacione o secret.
+- **ToS**: o `claude setup-token` é oferecido pela Anthropic para automação/CI
+  (uso previsto). Para **Codex/ChatGPT Pro**, uso headless em CI é zona mais
+  cinzenta — verifique os termos da OpenAI antes.
+- **Segurança**: o token **é a sua conta** — trate o secret com cuidado (escopo,
+  quem tem acesso ao repo).
 
 ## Limitações conhecidas
 
