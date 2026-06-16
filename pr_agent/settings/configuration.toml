@@ -2,7 +2,17 @@
 # Do not copy this entire file to your repository configuration.
 # Your repository configuration should only include options you wish to override from the defaults.
 
+[cli_ai]
+# Provider via CLI de assinatura (OAuth) — usado quando [config] ai_handler="cli".
+# Dirige um CLI já logado em modo headless; roda na cota da assinatura
+# (Claude Max / ChatGPT Pro), sem API key e sem a cota do GitHub Copilot.
+# Requer o CLI autenticado no ambiente (local ou self-hosted runner logado).
+command = "claude -p"        # ex.: "claude -p" (Claude Code) | "codex exec" (Codex)
+timeout_seconds = 300
+pass_prompt_via = "stdin"    # "stdin" (seguro p/ diffs grandes) | "arg"
+
 [config]
+ai_handler="litellm"         # "litellm" (API key, default) | "cli" (assinatura via CLI, OAuth)
 # models
 model="gpt-5.5-2026-04-23"
 fallback_models=["gpt-5.4-mini"]

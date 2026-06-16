@@ -48,9 +48,23 @@ commands = list(command2class.keys())
 
 
 
+def _resolve_ai_handler():
+    """Seleciona o AI handler por config (``[config] ai_handler``).
+
+    - ``"litellm"`` (default) → API key (pay-per-token), via LiteLLM.
+    - ``"cli"``               → CLI de assinatura (OAuth): Claude Code / Codex.
+    """
+    handler = str(get_settings().get("CONFIG.AI_HANDLER", "litellm")).lower()
+    if handler == "cli":
+        from pr_agent.algo.ai_handlers.cli_ai_handler import CliAiHandler
+        return CliAiHandler
+    return LiteLLMAIHandler
+
+
 class PRAgent:
-    def __init__(self, ai_handler: partial[BaseAiHandler,] = LiteLLMAIHandler):
-        self.ai_handler = ai_handler  # will be initialized in run_action
+    def __init__(self, ai_handler: partial[BaseAiHandler,] = None):
+        # Se não for injetado explicitamente, resolve por config (litellm | cli).
+        self.ai_handler = ai_handler or _resolve_ai_handler()  # init in run_action
 
     async def _handle_request(self, pr_url, request, notify=None) -> bool:
         # First, apply repo specific settings if exists
