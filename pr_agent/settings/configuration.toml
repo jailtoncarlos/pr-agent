@@ -2,7 +2,17 @@
 # Do not copy this entire file to your repository configuration.
 # Your repository configuration should only include options you wish to override from the defaults.
 
+[cli_ai]
+# Subscription CLI provider (OAuth) — used when [config] ai_handler="cli".
+# Drives an already-logged-in CLI in headless mode; runs on the subscription
+# quota (Claude Max / ChatGPT Pro), with no API key and no GitHub Copilot quota.
+# Requires the CLI authenticated in the environment (local, or a self-hosted
+# runner that is already logged in).
+command = "claude -p"        # e.g. "claude -p" (Claude Code) | "codex exec" (Codex)
+timeout_seconds = 300
+
 [config]
+ai_handler="litellm"         # "litellm" (API key, default) | "cli" (subscription via CLI, OAuth)
 # models
 model="gpt-5.5-2026-04-23"
 fallback_models=["gpt-5.4-mini"]
@@ -132,7 +142,7 @@ use_conversation_history=true
 
 
 [pr_code_suggestions] # /improve #
-commitable_code_suggestions = false
+commitable_code_suggestions = true   # fork default: post /improve suggestions inline (line-anchored)
 dual_publishing_score_threshold=-1 # -1 to disable, [0-10] to set the threshold (>=) for publishing a code suggestion both in a table and as committable
 focus_only_on_problems=true
 #
@@ -149,7 +159,7 @@ new_score_mechanism_th_high=9
 new_score_mechanism_th_medium=7
 # params for '/improve --extended' mode
 auto_extended_mode=true
-num_code_suggestions_per_chunk=3
+num_code_suggestions_per_chunk=8   # fork default (was 3): per-chunk ceiling for /improve. NOTE: /improve reads THIS key, not `num_code_suggestions` (that one is for /improve_component). It is a ceiling; actual count is also bound by focus_only_on_problems + score threshold + inline anchoring.
 max_number_of_calls = 3
 parallel_calls = true
 

@@ -1,0 +1,69 @@
+# Example: org-wide AI PR review from a GOVERNANCE ANCHOR repo.
+#
+# Pattern: write the reusable workflow ONCE in the anchor repo (e.g.
+# Prisma-Consultoria/prisma-ccm-docs); member repos do NOT copy it — they either
+# call it (opt-in) or are forced by an Organization Ruleset (sovereign).
+#
+# Prerequisite: an ORGANIZATION secret `CLAUDE_CODE_OAUTH_TOKEN` (from
+# `claude setup-token`), shared to the org's repos.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 1) In the ANCHOR repo:  .github/workflows/pr-review-reusable.yml
+# ─────────────────────────────────────────────────────────────────────────────
+name: PR review (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      cli_command:
+        type: string
+        required: false
+        default: "claude -p"
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: true
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: jailtoncarlos/pr-agent@<COMMIT_SHA>   # pin to a SHA
+        with:
+          cli_command: ${{ inputs.cli_command }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2a) OPT-IN — caller in each member repo:  .github/workflows/pr-review.yml
+#     (3 lines of glue; NOT a copy of the reusable workflow)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# name: PR review
+# on:
+#   pull_request:
+#     types: [opened, synchronize, reopened]
+# jobs:
+#   review:
+#     uses: Prisma-Consultoria/prisma-ccm-docs/.github/workflows/pr-review-reusable.yml@<COMMIT_SHA>
+#     permissions:
+#       pull-requests: write
+#       contents: read
+#     secrets:
+#       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}   # org secret
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 2b) SOVEREIGN + AUTOMATIC — Organization Ruleset (no per-repo file)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Org Settings → Rulesets → New ruleset:
+#   - Target: all repositories (or by custom property, e.g. ai_review=true)
+#   - Rule: "Require workflows to pass" → add the anchor workflow above,
+#           pinned to a SHA/ref.
+# Every PR in the targeted repos then runs the anchor workflow automatically,
+# with no opt-in file per repo (anchor-sovereign).
+#
+# NOTE: org-wide runs consume the token owner's subscription quota — fine for a
+# small org, a bottleneck at scale. Pin the action/workflow by SHA.
