@@ -64,6 +64,10 @@ class CliAiHandler(BaseAiHandler):
         # string, so a malformed/empty value must not crash construction.
         try:
             self.timeout = int(settings.get("CLI_AI.TIMEOUT_SECONDS", 300))
+            # A non-positive timeout makes asyncio.wait_for fire immediately on
+            # every call (and kill the CLI) — treat it as invalid too.
+            if self.timeout <= 0:
+                self.timeout = 300
         except (TypeError, ValueError):
             self.timeout = 300
 
@@ -82,6 +86,16 @@ class CliAiHandler(BaseAiHandler):
         argv = shlex.split(self.command)
         if not argv:
             raise ValueError("CliAiHandler: empty CLI_AI.COMMAND.")
+        # A repo-controlled command can point at a path whose basename is
+        # allowlisted (e.g. a malicious './claude' committed to the PR checkout,
+        # which lives on the runner). Only the trusted env may supply a
+        # path-qualified executable; otherwise require a bare command name
+        # resolved via PATH.
+        if os.path.dirname(argv[0]) and not os.environ.get("PR_AGENT_CLI_COMMAND"):
+            raise PermissionError(
+                "CliAiHandler: refusing a path-qualified executable from untrusted "
+                "config; use a bare command name resolved via PATH (or set the "
+                "trusted env var PR_AGENT_CLI_COMMAND).")
         executable = os.path.basename(argv[0])
         allowed = _allowed_commands()
         if executable not in allowed:

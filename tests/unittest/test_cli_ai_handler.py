@@ -31,10 +31,6 @@ class TestCommandResolution:
         argv = _handler("codex exec")._resolve_argv()
         assert argv[0] == "codex" and "--skip-git-repo-check" in argv
 
-    def test_full_path_executable_allowed_by_basename(self):
-        # allowlist matches the basename; argv[0] keeps the full path
-        assert _handler("/usr/local/bin/claude -p")._resolve_argv()[0] == "/usr/local/bin/claude"
-
     def test_empty_command_raises(self):
         with pytest.raises(ValueError):
             _handler("   ")._resolve_argv()
@@ -57,16 +53,33 @@ class TestSecurityAllowlist:
         assert h.command == "claude -p"
         assert h._resolve_argv()[0] == "claude"
 
+    def test_path_qualified_executable_refused_from_untrusted(self):
+        # an attacker commits ./claude to the PR and sets command="./claude":
+        # basename is allowlisted but the path-qualified form must be refused
+        with pytest.raises(PermissionError):
+            _handler("./claude -p")._resolve_argv()
+
+    def test_path_qualified_executable_allowed_from_trusted_env(self, monkeypatch):
+        monkeypatch.setenv("PR_AGENT_CLI_COMMAND", "/usr/local/bin/claude -p")
+        assert _handler("ignored")._resolve_argv()[0] == "/usr/local/bin/claude"
+
 
 class TestRobustness:
     def test_malformed_timeout_falls_back_to_default(self):
         assert _handler("claude -p", timeout="not-a-number").timeout == 300
 
+    @pytest.mark.parametrize("bad", [0, -1, -300])
+    def test_non_positive_timeout_falls_back_to_default(self, bad):
+        assert _handler("claude -p", timeout=bad).timeout == 300
+
     def test_timeout_kills_subprocess(self, monkeypatch):
         # allow the python interpreter as the CLI, run a sleeper -> timeout must
-        # raise AND reap the process (no orphan).
+        # raise AND reap the process (no orphan). The interpreter is path-qualified,
+        # so it must come from the trusted env (PR_AGENT_CLI_COMMAND).
         py = os.path.basename(sys.executable)
+        cmd = f'{sys.executable} -c "import time; time.sleep(30)"'
         monkeypatch.setenv("PR_AGENT_CLI_ALLOWED_COMMANDS", py)
-        h = _handler(f'{sys.executable} -c "import time; time.sleep(30)"', timeout=1)
+        monkeypatch.setenv("PR_AGENT_CLI_COMMAND", cmd)
+        h = _handler("ignored", timeout=1)
         with pytest.raises(TimeoutError):
             asyncio.run(h.chat_completion(model="x", system="", user="hi"))
