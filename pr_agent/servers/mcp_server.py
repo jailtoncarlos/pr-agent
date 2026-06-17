@@ -71,12 +71,33 @@ def _configure() -> None:
         settings.set("GITHUB.USER_TOKEN", token)
 
 
-async def _run(pr_url: str, command: list[str]) -> bool:
-    # Configure before constructing PRAgent — the AI handler is resolved in
-    # PRAgent.__init__ from CONFIG.AI_HANDLER.
-    _configure()
-    get_logger().info(f"MCP: running {command} on {pr_url}")
-    return await PRAgent().handle_request(pr_url, command)
+_RESULT_NOUN = {
+    "review": "a review",
+    "improve": "code suggestions",
+    "describe": "a description update",
+}
+
+
+async def _run(pr_url: str, command: list[str]) -> str:
+    """Run a pr-agent command and return a human-readable result for the host.
+
+    ``handle_request`` already swallows command errors (returns ``False``), but
+    ``_configure()`` and ``PRAgent()`` construction run before it — wrap the whole
+    thing so a config/auth/network failure is reported as a readable string
+    instead of surfacing as an opaque MCP server error.
+    """
+    noun = _RESULT_NOUN.get(command[0], command[0])
+    try:
+        # Configure before constructing PRAgent — the AI handler is resolved in
+        # PRAgent.__init__ from CONFIG.AI_HANDLER.
+        _configure()
+        get_logger().info(f"MCP: running {command} on {pr_url}")
+        ok = await PRAgent().handle_request(pr_url, command)
+    except Exception as exc:
+        get_logger().error(f"MCP request failed: {exc}")
+        return f"Error posting {noun} on {pr_url}: {exc}"
+    return (f"Posted {noun} on {pr_url}." if ok
+            else f"Failed to post {noun} on {pr_url} (see server logs).")
 
 
 @mcp.tool()
@@ -86,22 +107,19 @@ async def review_pr(pr_url: str) -> str:
     Runs on the configured subscription CLI (e.g. ``claude -p`` / ``codex exec``),
     which may use a different model than this window.
     """
-    ok = await _run(pr_url, ["review"])
-    return f"{'Posted' if ok else 'Failed to post'} a review on {pr_url}."
+    return await _run(pr_url, ["review"])
 
 
 @mcp.tool()
 async def improve_pr(pr_url: str) -> str:
     """Suggest concrete code improvements on a PR as inline, committable suggestions."""
-    ok = await _run(pr_url, ["improve"])
-    return f"{'Posted' if ok else 'Failed to post'} code suggestions on {pr_url}."
+    return await _run(pr_url, ["improve"])
 
 
 @mcp.tool()
 async def describe_pr(pr_url: str) -> str:
     """Generate or refresh a PR's title and description."""
-    ok = await _run(pr_url, ["describe"])
-    return f"{'Updated' if ok else 'Failed to update'} the description of {pr_url}."
+    return await _run(pr_url, ["describe"])
 
 
 def main() -> None:
