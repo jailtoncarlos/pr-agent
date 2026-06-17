@@ -2,15 +2,16 @@ aiohttp==3.13.4
 anthropic>=0.69.0
 #anthropic[vertex]==0.47.1
 atlassian-python-api==3.41.4
-azure-devops==7.1.0b4
-azure-identity==1.25.0
-boto3==1.40.45
+# Cloud provider/secret SDKs moved to optional extras (fork) to slim the base
+# install — see pyproject [project.optional-dependencies]:
+#   pip install "pr-agent[aws]"   # boto3 (CodeCommit, Bedrock, Secrets Manager)
+#   pip install "pr-agent[azure]" # azure-devops, azure-identity
+#   pip install "pr-agent[gcp]"   # google-cloud-aiplatform, google-cloud-storage
 certifi==2024.8.30
 dynaconf==3.2.4
 fastapi==0.118.0
 GitPython==3.1.41
-google-cloud-aiplatform==1.154.0
-google-cloud-storage==2.10.0
+# google-cloud-* moved to the [gcp] extra (fork) — see note above.
 protobuf==6.33.6  # grpcio-status 1.80.0 forces >=6.31.1,<7; pinned to lock the resolved transitive version
 Jinja2==3.1.6
 litellm==1.84.0

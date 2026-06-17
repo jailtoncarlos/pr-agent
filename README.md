@@ -18,6 +18,9 @@ README follows below**, unchanged.
 - **Inline `/improve` by default** — committable, line-anchored suggestions.
 - **Security hardening** of the CLI handler — executable allowlist (RCE defense),
   timeout subprocess kill, robust config parsing.
+- **Slim base install** — heavy cloud SDKs (AWS/Azure/GCP) are now **optional
+  extras** (`pr-agent[aws]` / `[azure]` / `[gcp]` / `[clouds]`); the base stays
+  light for the common GitHub + OpenAI/Anthropic (or subscription) path.
 
 ## Fork documentation
 

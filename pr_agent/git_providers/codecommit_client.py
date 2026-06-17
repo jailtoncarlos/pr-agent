@@ -1,5 +1,11 @@
-import boto3
-import botocore
+# boto3/botocore are an optional extra (AWS CodeCommit). Guard the import so the
+# slim base install works without them — see pyproject `[project.optional-dependencies] aws`.
+try:
+    import boto3
+    import botocore
+    BOTO3_AVAILABLE = True
+except ImportError:
+    BOTO3_AVAILABLE = False
 
 
 class CodeCommitDifferencesResponse:
@@ -60,6 +66,10 @@ class CodeCommitClient:
         return True
 
     def _connect_boto_client(self):
+        if not BOTO3_AVAILABLE:
+            raise ImportError(
+                "AWS CodeCommit support requires boto3. Install it with: "
+                "pip install 'pr-agent[aws]'")
         try:
             self.boto_client = boto3.client("codecommit")
         except Exception as e:
