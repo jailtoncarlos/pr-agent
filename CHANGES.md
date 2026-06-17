@@ -66,8 +66,11 @@ Changes made in **this fork** relative to upstream
 
 - `docs/oauth-cli-mode.md` — added "Output behavior" notes: **non-determinism**
   in CLI mode (no seed/`response_format` on the subscription path) and
-  **suggestion volume** (`num_code_suggestions` is a ceiling shaped by
-  focus/score/inline-anchoring filters), with the knobs to get Copilot-like volume.
+  **suggestion volume**. Corrects the key — `/improve` reads
+  `num_code_suggestions_per_chunk` (not `num_code_suggestions`, which is
+  `/improve_component`) — and adds an empirical isolation: on a small PR the
+  per-chunk ceiling is never binding; count is driven by *supply* + run-to-run
+  non-determinism, not the config.
 
 ### Planned
 

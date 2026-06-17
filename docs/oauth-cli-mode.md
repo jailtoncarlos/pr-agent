@@ -133,35 +133,69 @@ findings. Causes:
   `pr_code_suggestions.py`), so a second run is *not* independent of the first — it
   tends to present a refreshed set.
 
-### Why fewer comments than expected (e.g. 2, not 4) — and getting Copilot-like volume
+### Why fewer comments than expected — and the right knob
 
-`num_code_suggestions` (default **4**) is a **ceiling, not a floor**. The final
-count is reduced by a filter chain, so a small/clean diff yields fewer:
+> **Key correction.** `/improve` reads **`pr_code_suggestions.num_code_suggestions_per_chunk`**
+> (`pr_agent/tools/pr_code_suggestions.py:43`), **not** `num_code_suggestions`. The
+> `num_code_suggestions` key (default 4) belongs to **`[pr_improve_component]`**
+> (`/improve_component`), a *different* tool. Setting
+> `PR_CODE_SUGGESTIONS__NUM_CODE_SUGGESTIONS` therefore has **no effect** on
+> `/improve`. This fork's default for the right key is
+> `num_code_suggestions_per_chunk = 8`.
+
+The per-chunk value is a **ceiling, not a floor**. The actual count is also shaped
+by a filter chain, so a small/clean diff yields fewer:
 
 1. **`focus_only_on_problems = true`** — only real problems pass; style/nits are
-   dropped.
+   dropped (this caps the *supply* of suggestions).
 2. **Self-reflection scoring** — each suggestion is scored
-   (`pr_code_suggestions_reflect_prompts.toml`); `suggestions_score_threshold` and
-   `final_clip_factor` clip low-score ones.
-3. **Inline anchoring (422-safe)** — a committable inline suggestion is only posted
+   (`pr_code_suggestions_reflect_prompts.toml`); note self-reflection only
+   *assigns* a score (it does not drop). The score then feeds the threshold below.
+3. **Score threshold** — `suggestions_score_threshold` drops `score < max(1, threshold)`
+   (`pr_code_suggestions.py:717`). With the default `0` this only removes `score < 1`.
+4. **Inline anchoring (422-safe)** — a committable inline suggestion is only posted
    when its `relevant_lines_start/end` fall **inside a diff hunk**
    (`push_inline_code_suggestions`); ones that don't map to a changed line are
-   dropped. This is the strictest filter with `commitable_code_suggestions = true`
-   (this fork's default).
-4. **Chunking** — `num_code_suggestions_per_chunk` (3) × `max_number_of_calls` (3);
-   a small PR is a single chunk.
+   dropped. Strictest with `commitable_code_suggestions = true` (this fork's default).
+5. **Chunking** — `num_code_suggestions_per_chunk` × `max_number_of_calls` (3);
+   a small PR is a single chunk, so only one call runs.
 
-The GitHub Copilot reviewer posts more inline comments because it has **no such
-ceiling** and a different (review-style) design. To get closer to that volume with
-PR-Agent, tune (CLI or API mode alike):
+### Empirical isolation (PR with ~100 lines of changed Python, CLI/OAuth handler)
+
+Three committable runs, varying one factor at a time, counting **only** the
+inline comments each run posted:
+
+| Run | `num_code_suggestions_per_chunk` | `focus_only_on_problems` | inline posted |
+|---|---|---|---|
+| 1 | 3 | true | 2 |
+| 2 | **8** | true | 3 |
+| 3 | 8 | **false** | 4 |
+
+Findings:
+
+- **The ceiling was never binding.** Every run produced *fewer* suggestions than
+  its ceiling (2 and 3 under a cap of 3/8). Raising 3 → 8 did **not** unlock more.
+- **Each lever moved the count by ~±1** — within run-to-run **non-determinism**.
+  The *sets* barely overlapped across runs (different files/lines each time); what
+  changes between runs is **which** findings, more than **how many**.
+- On a **small/clean PR the binding factor is supply** (how many real issues exist)
+  **plus non-determinism**, not the config. `focus_only_on_problems = false` adds
+  roughly one marginal nit.
+- The genuine driver of higher volume is a **larger PR** (more changed code → more
+  chunks → more real issues), not the ceiling.
+
+### Knobs (still useful, with realistic expectations)
 
 | Goal | Knob | Note |
 |---|---|---|
-| More suggestions | `pr_code_suggestions.num_code_suggestions` ↑ (e.g. 8–10) | It is a ceiling; real count still bounded by the filters below |
-| Include style/nits | `pr_code_suggestions.focus_only_on_problems = false` | More volume, more noise |
-| Keep low-score ones | lower `pr_code_suggestions.suggestions_score_threshold` | Already `0` by default (minimal) |
-| Bigger diffs covered | `pr_code_suggestions.max_number_of_calls` ↑ | More chunks = more LLM calls = more latency/cost |
+| Raise the ceiling | `pr_code_suggestions.num_code_suggestions_per_chunk` ↑ | The **correct** key for `/improve`. A ceiling only — won't add volume when supply is below it. |
+| Include style/nits | `pr_code_suggestions.focus_only_on_problems = false` | More volume, more noise (~+1 on small PRs). |
+| Keep low-score ones | lower `pr_code_suggestions.suggestions_score_threshold` | Already `0` by default (minimal). |
+| Cover bigger diffs | `pr_code_suggestions.max_number_of_calls` ↑ | More chunks = more LLM calls = more latency/cost. Helps **large** PRs. |
 
-> The inline-anchoring filter (#3) cannot be relaxed without re-introducing HTTP
-> 422 errors — it exists precisely to keep committable comments on valid diff
-> lines.
+> The inline-anchoring filter (#4) cannot be relaxed without re-introducing HTTP
+> 422 errors — it exists precisely to keep committable comments on valid diff lines.
+>
+> The GitHub Copilot reviewer posts more comments because it has no per-chunk
+> ceiling **and** a liberal review-style design — a different philosophy
+> (quantity) from `/improve` (curated, score-gated).
