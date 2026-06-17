@@ -239,9 +239,30 @@ ___
 
 ## How It Works
 
-The following diagram illustrates PR-Agent tools and their flow:
+The diagram below illustrates PR-Agent's flow — and where this fork's CLI/OAuth
+subscription handler plugs in. For a step-by-step legend grounded in the code,
+see **[How It Works — explained](docs/how-it-works-explained.md)**.
 
-![PR-Agent Tools](https://www.qodo.ai/images/pr_agent/diagram-v0.9.png)
+```mermaid
+flowchart TD
+    A["Trigger: CLI, GitHub Action, webhook/App, or a PR comment"] --> B["Git provider: fetch PR diff + metadata"]
+    B --> C["Diff processing: hunks, token-limit compression, file filters"]
+    C --> D["Prompt building: Jinja2 templates + metadata + config"]
+    D --> E{"AI handler"}
+    E -->|"ai_handler=litellm (API key)"| F["LiteLLM: OpenAI / Anthropic / Bedrock / Vertex / Azure"]
+    E -->|"ai_handler=cli — this fork (subscription, OAuth)"| G["CliAiHandler: claude -p or codex exec"]
+    F --> H["Parse structured output: YAML/JSON, retry on failure"]
+    G --> H
+    H --> I{"Tool"}
+    I -->|"/review"| J["Review summary comment + labels"]
+    I -->|"/improve"| K["Inline suggestions: Reviews API line-anchored, 422-safe"]
+    I -->|"/describe"| L["Update PR title + description"]
+    J --> M["Git provider publishes to the PR"]
+    K --> M
+    L --> M
+```
+
+<sub>The original upstream diagram image lived at `qodo.ai/images/pr_agent/diagram-v0.9.png`; this fork replaces it with the versioned diagram above.</sub>
 
 ## Data Privacy
 

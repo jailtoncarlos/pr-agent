@@ -50,6 +50,12 @@ Changes made in **this fork** relative to upstream
   default, `/improve` now posts suggestions as **inline line-anchored** comments
   instead of a single summary table. Validated on a real PR.
 
+### Changed — docs
+
+- README "How It Works": replaced the external `qodo.ai` image with a **versioned
+  mermaid diagram**, and added `docs/how-it-works-explained.md` — a code-grounded,
+  step-by-step legend showing where the CLI/OAuth handler fits in the flow.
+
 ### Planned
 
 - End-to-end validation on a real PR — main risk is structured-output reliability
