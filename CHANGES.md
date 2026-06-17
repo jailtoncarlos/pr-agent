@@ -7,6 +7,25 @@ Changes made in **this fork** relative to upstream
 > change you make on top of upstream. Keep `LICENSE` and `NOTICE` intact; this file
 > is where "what we changed" is stated (Apache-2.0 §4(b)).
 
+## Unreleased — branch `fix/cli-handler-hardening`
+
+### Fixed — `CliAiHandler` security & robustness (dogfood: found by reviewing #5 with this very tool)
+
+- **RCE hardening (command allowlist).** `CliAiHandler` executes `CLI_AI.COMMAND`,
+  which a per-repo `.pr_agent.toml` can override (`apply_repo_settings`) — an
+  untrusted PR could set `[cli_ai] command` to an arbitrary binary. Now: the
+  command is preferred from the **trusted env** (`PR_AGENT_CLI_COMMAND`) over
+  merged settings, **and** the resolved executable is **allowlisted** (default
+  `claude`/`codex`; extend only via the trusted `PR_AGENT_CLI_ALLOWED_COMMANDS`).
+  Non-allowlisted commands are refused (`PermissionError`).
+- **Orphan-process fix.** On timeout, the spawned CLI subprocess was never
+  terminated (it kept running). Now the process is `kill()`-ed and reaped before
+  re-raising `TimeoutError`.
+- **Robust timeout parsing.** `int(CLI_AI.TIMEOUT_SECONDS)` no longer crashes
+  construction on a malformed/empty value — falls back to the default (300s).
+- `tests/unittest/test_cli_ai_handler.py` — covers allowlist (RCE), trusted-env
+  precedence, timeout subprocess kill, and config-parse robustness.
+
 ## Unreleased — branch `feat/oauth-cli-ai-handler`
 
 ### Added — CLI/OAuth AI handler (run on a chat/CLI subscription, no API key)
