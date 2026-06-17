@@ -7,6 +7,21 @@ Changes made in **this fork** relative to upstream
 > change you make on top of upstream. Keep `LICENSE` and `NOTICE` intact; this file
 > is where "what we changed" is stated (Apache-2.0 §4(b)).
 
+## Unreleased — branch `docs/mcp-usage-guide`
+
+### Changed — docs
+
+- `docs/mcp-local.md` — added an end-to-end **Quickstart** for using the server in
+  a Claude Code window (pipx install from git — the fork is **not on PyPI**;
+  `claude mcp add --scope user`; `/mcp` verify; pick the cross-model reviewer),
+  plus **scope & token hygiene** (don't commit a token in project-scope
+  `.mcp.json`) and a **cross-model** table. Fixes the install command (was a
+  PyPI `pip install`, which doesn't exist for the fork).
+- `README.md` — turned the minimal fork notice into a proper **fork header**:
+  "What this fork adds" + a **Fork documentation** table linking all four fork
+  docs + `CHANGES.md` + a Quickstart pointer. The upstream README is preserved
+  below and explicitly attributed (noting the How It Works diagram swap).
+
 ## Unreleased — branch `feat/mcp-local-server`
 
 ### Added — local stdio MCP server ([#2](https://github.com/jailtoncarlos/pr-agent/issues/2))

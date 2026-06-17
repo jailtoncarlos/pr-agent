@@ -1,20 +1,42 @@
-> ## 🔱 Fork notice
->
-> This is a community **fork of [qodo-ai/pr-agent](https://github.com/qodo-ai/pr-agent)** (Apache-2.0).
-> It is **not** affiliated with or endorsed by Qodo — all credit for the original project
-> goes to its authors and contributors.
->
-> **What this fork adds:** a **CLI/OAuth AI handler** so PR review runs on your
-> **chat/CLI subscription** (Claude Max via the `claude` CLI, ChatGPT Pro via the `codex` CLI)
-> instead of an **API key** — useful when you only have a subscription (no pay-per-token API
-> quota) or hit the GitHub Copilot review quota.
->
-> See **[`CHANGES.md`](CHANGES.md)** for the full list of fork changes and
-> **[`docs/oauth-cli-mode.md`](docs/oauth-cli-mode.md)** for usage. To review a PR
-> from inside your agent window (Claude Code / Cursor / Codex), see the local MCP
-> server **[`docs/mcp-local.md`](docs/mcp-local.md)** — it enables cross-model
-> review (window = Claude, reviewer = ChatGPT, or vice-versa).
-> The original upstream README follows below, unchanged.
+# 🔱 PR-Agent — CLI/OAuth subscription fork
+
+A community **fork of [qodo-ai/pr-agent](https://github.com/qodo-ai/pr-agent)**
+(Apache-2.0). **Not** affiliated with or endorsed by Qodo — all credit for the
+original project goes to its authors and contributors. The full **upstream
+README follows below**, unchanged.
+
+## What this fork adds
+
+- **CLI/OAuth AI handler** (`ai_handler=cli`) — run PR review on your **chat/CLI
+  subscription** (`claude -p` for Claude Max, `codex exec` for ChatGPT Pro)
+  instead of an **API key**. No API key, no GitHub Copilot quota — it runs on the
+  subscription you already pay for.
+- **Local MCP server** (`pr-agent-mcp`) — review a PR from **inside any MCP window**
+  (Claude Code / Cursor / Codex), with **cross-model** review: window = Claude,
+  reviewer = ChatGPT (or vice-versa) → an independent second opinion.
+- **Reusable GitHub Action** — run the reviewer in **CI** on a subscription token.
+- **Inline `/improve` by default** — committable, line-anchored suggestions.
+- **Security hardening** of the CLI handler — executable allowlist (RCE defense),
+  timeout subprocess kill, robust config parsing.
+
+## Fork documentation
+
+| Doc | What it covers |
+|---|---|
+| [`docs/oauth-cli-mode.md`](docs/oauth-cli-mode.md) | run on a CLI/OAuth subscription (no API key) — enable, CI, output behavior, security |
+| [`docs/mcp-local.md`](docs/mcp-local.md) | local MCP server — **Quickstart** to use it in a Claude Code window, cross-model |
+| [`docs/how-it-works-explained.md`](docs/how-it-works-explained.md) | code-grounded legend of the flow + where the CLI/OAuth handler plugs in |
+| [`docs/orchestrator-integration.md`](docs/orchestrator-integration.md) | PR-Agent as a review *producer* behind an orchestrator (vs. an in-house reviewer) |
+| [`CHANGES.md`](CHANGES.md) | the full, itemized list of fork changes (Apache-2.0 §4(b)) |
+
+**Quickstart (Claude Code):** install with `pipx install "pr-agent[mcp] @ git+https://github.com/jailtoncarlos/pr-agent.git"`, then follow the Quickstart in [`docs/mcp-local.md`](docs/mcp-local.md).
+
+---
+
+> _Everything below this line is the upstream **qodo-ai/pr-agent** README,
+> preserved as-is — except the **How It Works** section, whose external image was
+> replaced with a versioned mermaid diagram (see
+> [`docs/how-it-works-explained.md`](docs/how-it-works-explained.md))._
 
 ---
 
