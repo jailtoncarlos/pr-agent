@@ -7,6 +7,23 @@ Changes made in **this fork** relative to upstream
 > change you make on top of upstream. Keep `LICENSE` and `NOTICE` intact; this file
 > is where "what we changed" is stated (Apache-2.0 §4(b)).
 
+## Unreleased — branch `feat/mcp-local-server`
+
+### Added — local stdio MCP server ([#2](https://github.com/jailtoncarlos/pr-agent/issues/2))
+
+- `pr_agent/servers/mcp_server.py` — **FastMCP stdio server** exposing the reviewer
+  as tools (`review_pr`, `improve_pr`, `describe_pr`). The host agent (Claude Code /
+  Cursor / Codex) launches it as a local subprocess; the review runs on the
+  configured subscription CLI (`ai_handler=cli`), **independent of the host
+  window** → cross-model review (window=Claude, reviewer=ChatGPT, or vice-versa).
+- `pyproject.toml` — console entry point `pr-agent-mcp` + optional extra
+  `pr-agent[mcp]` (the `mcp` dependency stays out of the base install).
+- GitHub token resolved from `GITHUB_TOKEN` or a logged-in `gh` (`gh auth token`);
+  the CLI command comes from the **trusted** `PR_AGENT_CLI_COMMAND` (so a per-repo
+  `.pr_agent.toml` can't redirect the executed command).
+- `docs/mcp-local.md` + `docs/examples/mcp-claude-code.json` /
+  `mcp-codex-config.toml`.
+
 ## Unreleased — branch `fix/cli-handler-hardening`
 
 ### Fixed — `CliAiHandler` security & robustness (dogfood: found by reviewing #5 with this very tool)

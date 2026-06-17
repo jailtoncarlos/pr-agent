@@ -27,6 +27,11 @@ classifiers = [
 ]
 dynamic = ["dependencies"]
 
+# Fork extras. The MCP local server (pr-agent-mcp) is optional:
+#   pip install "pr-agent[mcp]"
+[project.optional-dependencies]
+mcp = ["mcp>=1.2"]
+
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
@@ -48,6 +53,7 @@ include = [
 
 [project.scripts]
 pr-agent = "pr_agent.cli:run"
+pr-agent-mcp = "pr_agent.servers.mcp_server:main"
 
 [tool.ruff]
 line-length = 120

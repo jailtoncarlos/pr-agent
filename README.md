@@ -10,7 +10,10 @@
 > quota) or hit the GitHub Copilot review quota.
 >
 > See **[`CHANGES.md`](CHANGES.md)** for the full list of fork changes and
-> **[`docs/oauth-cli-mode.md`](docs/oauth-cli-mode.md)** for usage.
+> **[`docs/oauth-cli-mode.md`](docs/oauth-cli-mode.md)** for usage. To review a PR
+> from inside your agent window (Claude Code / Cursor / Codex), see the local MCP
+> server **[`docs/mcp-local.md`](docs/mcp-local.md)** — it enables cross-model
+> review (window = Claude, reviewer = ChatGPT, or vice-versa).
 > The original upstream README follows below, unchanged.
 
 ---

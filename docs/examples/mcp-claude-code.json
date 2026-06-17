@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "pr-agent": {
+      "command": "pr-agent-mcp",
+      "env": {
+        "PR_AGENT_CLI_COMMAND": "codex exec",
+        "GITHUB_TOKEN": "ghp_xxx_or_omit_to_use_gh_auth"
+      }
+    }
+  }
+}
