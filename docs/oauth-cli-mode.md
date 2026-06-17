@@ -95,6 +95,22 @@ the auth):
 - **Security**: the token **is your account** — treat the secret carefully
   (scope, who can access the repo).
 
+## Security — the executed command
+
+This handler **executes** `CLI_AI.COMMAND`. A per-repo `.pr_agent.toml` can
+override config keys (`apply_repo_settings`), so without guards an untrusted PR
+could set `[cli_ai] command` to an arbitrary binary → RCE on the runner. Two
+defenses are in place:
+
+- The command is preferred from the **trusted environment**
+  (`PR_AGENT_CLI_COMMAND`, set by the operator/workflow) over the merged settings.
+- The resolved **executable is allowlisted** — default `claude` / `codex`. Extend
+  it only via the trusted env var `PR_AGENT_CLI_ALLOWED_COMMANDS` (comma-separated
+  basenames), never from repo config. Anything else is refused.
+
+So even if a repo file overrides `[cli_ai] command`, the handler will only run an
+allowlisted CLI.
+
 ## Known limitations
 
 - **Structured output**: the prompts ask for YAML/JSON; the CLI produces it, but
