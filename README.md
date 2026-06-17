@@ -239,30 +239,102 @@ ___
 
 ## How It Works
 
-The diagram below illustrates PR-Agent's flow — and where this fork's CLI/OAuth
-subscription handler plugs in. For a step-by-step legend grounded in the code,
-see **[How It Works — explained](docs/how-it-works-explained.md)**.
+The diagram below is PR-Agent's flow — a versioned, faithful recreation of the
+upstream "How It Works" figure. The AI steps (**PR-Agent Planning** and every
+tool) run through a pluggable **AI handler**: that is the single seam where this
+fork adds `ai_handler=cli` to run on a **chat/CLI subscription (OAuth)** instead
+of an API key. For a step-by-step legend grounded in the code — and where the
+handler plugs in — see **[How It Works — explained](docs/how-it-works-explained.md)**.
 
 ```mermaid
-flowchart TD
-    A["Trigger: CLI, GitHub Action, webhook/App, or a PR comment"] --> B["Git provider: fetch PR diff + metadata"]
-    B --> C["Diff processing: hunks, token-limit compression, file filters"]
-    C --> D["Prompt building: Jinja2 templates + metadata + config"]
-    D --> E{"AI handler"}
-    E -->|"ai_handler=litellm (API key)"| F["LiteLLM: OpenAI / Anthropic / Bedrock / Vertex / Azure"]
-    E -->|"ai_handler=cli — this fork (subscription, OAuth)"| G["CliAiHandler: claude -p or codex exec"]
-    F --> H["Parse structured output: YAML/JSON, retry on failure"]
-    G --> H
-    H --> I{"Tool"}
-    I -->|"/review"| J["Review summary comment + labels"]
-    I -->|"/improve"| K["Inline suggestions: Reviews API line-anchored, 422-safe"]
-    I -->|"/describe"| L["Update PR title + description"]
-    J --> M["Git provider publishes to the PR"]
-    K --> M
-    L --> M
+flowchart LR
+    A1["In Public GitHub PR\ncomment: @CodiumAI-Agent [/command]"]
+    A2["In Private GitHub/GitLab/BitBucket PR\nafter installation, comment: [/command]"]
+    A3["Run PR-Agent locally with CLI"]
+
+    subgraph DIGEST["PR-Agent Digest Request"]
+        D1["PR status detection"]
+        D2["Hunks detection & prioritization"]
+        D3["detect contribution.md / guidelines.md\n(FUTURE)"]
+    end
+
+    subgraph PLAN["PR-Agent Planning"]
+        P1["Token-aware compression & prioritization"]
+        P2["Analyze user request"]
+        P3["Questioning user"]
+        P1 --> P2
+        P2 -->|"/reflect"| P3
+    end
+
+    ROUTER{"Which function?"}
+
+    T1["Similar issue finder tool"]
+    T2["Reviewing tool"]
+    T3["Auto-description tool"]
+    T4["Q&A tool"]
+    T5["Labeling tool"]
+    T6["Code-suggestion tool"]
+    T7["Changelog tool"]
+    T8["Code-docstring tool"]
+    T9["Future tool"]
+
+    R1["PR comment"]
+    R2["PR comment"]
+    R3["PR description"]
+    R4["PR comment"]
+    R5["PR labels"]
+    R6["PR inline code suggestions"]
+    R7["Update changelog"]
+    R8["PR inline code suggestions"]
+
+    PC["PR comment"]
+    UR["User response"]
+
+    A1 --> DIGEST
+    A2 --> DIGEST
+    A3 --> DIGEST
+
+    D1 --> P1
+    D2 --> P1
+    D3 -.-> P1
+
+    P2 --> ROUTER
+    P3 --> ROUTER
+
+    ROUTER -->|"/similar_issue"| T1
+    ROUTER -->|"/review"| T2
+    ROUTER -->|"/describe"| T3
+    ROUTER -->|"/ask"| T4
+    ROUTER -->|"/generate_labels"| T5
+    ROUTER -->|"/improve"| T6
+    ROUTER -->|"/update_changelog"| T7
+    ROUTER -->|"/add_doc"| T8
+    ROUTER -->|"/command"| T9
+
+    T1 --> R1
+    T2 --> R2
+    T3 --> R3
+    T4 --> R4
+    T5 --> R5
+    T6 --> R6
+    T7 --> R7
+    T8 --> R8
+    T9 -->|"..."| PC
+
+    R1 --> PC
+    R2 --> PC
+    R3 --> PC
+    R4 --> PC
+    R5 --> PC
+    R6 --> PC
+    R7 --> PC
+    R8 --> PC
+
+    PC --> UR
+    UR -.-> DIGEST
 ```
 
-<sub>The original upstream diagram image lived at `qodo.ai/images/pr_agent/diagram-v0.9.png`; this fork replaces it with the versioned diagram above.</sub>
+<sub>The original upstream diagram image lived at `qodo.ai/images/pr_agent/diagram-v0.9.png`; this fork replaces it with the versioned, faithful mermaid recreation above. The AI handler is not a node here — it is the LLM backend used inside **PR-Agent Planning** and every **tool**; see the explained doc for where `ai_handler=cli` (this fork) sits.</sub>
 
 ## Data Privacy
 

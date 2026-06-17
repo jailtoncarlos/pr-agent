@@ -52,9 +52,12 @@ Changes made in **this fork** relative to upstream
 
 ### Changed — docs
 
-- README "How It Works": replaced the external `qodo.ai` image with a **versioned
-  mermaid diagram**, and added `docs/how-it-works-explained.md` — a code-grounded,
-  step-by-step legend showing where the CLI/OAuth handler fits in the flow.
+- README "How It Works": replaced the external `qodo.ai` image with a **versioned,
+  faithful mermaid recreation** of the upstream figure (trigger surfaces → Digest →
+  Planning → Router → all tools → comment loop), and added
+  `docs/how-it-works-explained.md` — a code-grounded legend mapping each block to
+  its module and showing where the CLI/OAuth handler (`ai_handler=cli`) plugs in
+  (the LLM backend used by Planning and every tool).
 
 ### Planned
 
