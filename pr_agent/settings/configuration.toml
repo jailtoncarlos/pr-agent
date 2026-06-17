@@ -159,7 +159,7 @@ new_score_mechanism_th_high=9
 new_score_mechanism_th_medium=7
 # params for '/improve --extended' mode
 auto_extended_mode=true
-num_code_suggestions_per_chunk=3
+num_code_suggestions_per_chunk=8   # fork default (was 3): per-chunk ceiling for /improve. NOTE: /improve reads THIS key, not `num_code_suggestions` (that one is for /improve_component). It is a ceiling; actual count is also bound by focus_only_on_problems + score threshold + inline anchoring.
 max_number_of_calls = 3
 parallel_calls = true
 
