@@ -44,6 +44,12 @@ Changes made in **this fork** relative to upstream
   cross-model case in [#1](https://github.com/jailtoncarlos/pr-agent/issues/1)).
 - All fork-added code comments/docs are in English.
 
+### Changed — defaults
+
+- `[pr_code_suggestions] commitable_code_suggestions = true` (was `false`): by
+  default, `/improve` now posts suggestions as **inline line-anchored** comments
+  instead of a single summary table. Validated E2E on a real PR (no 422).
+
 ### Planned
 
 - End-to-end validation on a real PR — main risk is structured-output reliability
