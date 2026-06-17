@@ -25,13 +25,59 @@ This is the **local / interactive** path. The **CI** path is the GitHub Action
 | `improve_pr(pr_url)` | post inline, committable code suggestions |
 | `describe_pr(pr_url)` | generate/refresh the PR title + description |
 
+## Quickstart — use it in a Claude Code window (end-to-end)
+
+Goal: from a Claude Code window in any repo, ask *"review PR #X"* and have a
+**different model** (e.g. ChatGPT via `codex`) review it on your subscription.
+
+**1. Install the fork (with the `mcp` extra).** This fork is **not on PyPI** —
+install from git. Requires **Python ≥ 3.12**. `pipx` keeps `pr-agent-mcp` on PATH:
+
+```bash
+pipx install "pr-agent[mcp] @ git+https://github.com/jailtoncarlos/pr-agent.git"
+which pr-agent-mcp        # note the path (e.g. ~/.local/bin/pr-agent-mcp)
+```
+
+(venv alternative: `python3.12 -m venv ~/.venvs/pr-agent && ~/.venvs/pr-agent/bin/pip install "pr-agent[mcp] @ git+https://github.com/jailtoncarlos/pr-agent.git"` — then use the absolute `~/.venvs/pr-agent/bin/pr-agent-mcp` as the `command`.)
+
+**2. Log in the CLIs (reused by the server, no token in config).**
+
+```bash
+codex login     # if the reviewer is ChatGPT  (PR_AGENT_CLI_COMMAND="codex exec")
+claude /login   # if the reviewer is Claude    (PR_AGENT_CLI_COMMAND="claude -p")
+gh auth login   # so the server can resolve a GitHub token via `gh auth token`
+```
+
+**3. Register the server — user scope (applies to every repo you open).**
+
+```bash
+claude mcp add pr-agent --scope user \
+  --env PR_AGENT_CLI_COMMAND="codex exec" \
+  --env CONFIG__RESPONSE_LANGUAGE="pt-BR" \
+  -- pr-agent-mcp
+```
+
+(Equivalent to a `mcpServers` entry in `~/.claude.json` — see [Configure](#configure-the-host-agent) below. Use the absolute path to `pr-agent-mcp` if it is not on PATH.)
+
+**4. Reload and verify.** Restart the session and run `/mcp` — `pr-agent` should
+be **connected**, exposing `review_pr` / `improve_pr` / `describe_pr`.
+
+**5. Use it.** In the window:
+
+> improve the PR https://github.com/Prisma-Consultoria/prisma-ccm-docs/pull/440
+
+The agent calls `improve_pr` → the server runs `codex exec` (reviewer = ChatGPT) →
+posts inline suggestions on the PR in `pt-BR`. **Window = Claude, reviewer =
+ChatGPT** = an independent second opinion.
+
 ## Install
 
 ```bash
-pip install "pr-agent[mcp]"   # adds the optional `mcp` dependency
+pipx install "pr-agent[mcp] @ git+https://github.com/jailtoncarlos/pr-agent.git"
 ```
 
-This provides the `pr-agent-mcp` console command (the MCP server).
+Installs the fork (not on PyPI) with the optional `mcp` dependency, providing the
+`pr-agent-mcp` console command. **Python ≥ 3.12.**
 
 ## Auth — local, no token in config
 
@@ -70,6 +116,29 @@ This provides the `pr-agent-mcp` console command (the MCP server).
 command = "pr-agent-mcp"
 env = { PR_AGENT_CLI_COMMAND = "claude -p", GITHUB_TOKEN = "ghp_xxx_or_omit_to_use_gh_auth" }
 ```
+
+## Scope and token hygiene
+
+- **User scope** (`--scope user` / `~/.claude.json`) — one config that applies to
+  **every repo** you open. Best for a personal reviewer across an org.
+- **Project scope** (`.mcp.json` at the repo root) — committed and shared with the
+  team. **Do not put a real `GITHUB_TOKEN` here** — it would be committed. Rely on
+  the `gh auth token` fallback (omit `GITHUB_TOKEN`), or keep the token in your
+  shell env / user scope only.
+
+## Cross-model — pick the reviewer
+
+The reviewer is whatever `PR_AGENT_CLI_COMMAND` runs, **independent of your
+window**:
+
+| Window | `PR_AGENT_CLI_COMMAND` | Reviewer |
+|---|---|---|
+| Claude Code | `codex exec` | **ChatGPT** — independent second opinion |
+| Claude Code | `claude -p` | Claude — a fresh second pass (same family) |
+| Codex | `claude -p` | **Claude** — independent second opinion |
+
+For a genuine second opinion (anti-echo-chamber), set the reviewer to a model from
+a **different** family than your window.
 
 ## Use
 
