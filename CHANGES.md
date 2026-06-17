@@ -59,6 +59,11 @@ Changes made in **this fork** relative to upstream
   its module and showing where the CLI/OAuth handler (`ai_handler=cli`) plugs in
   (the LLM backend used by Planning and every tool).
 
+- `docs/orchestrator-integration.md` — documents PR-Agent as a **review producer**
+  behind an orchestrator (worked example: the forje `pr-review` FSM), with the
+  3-phase plug-in mapping and a code-grounded comparison of this fork vs. forje's
+  in-house `LOCAL_AI_REVIEW` (flow / technology / technique).
+
 ### Planned
 
 - End-to-end validation on a real PR — main risk is structured-output reliability
