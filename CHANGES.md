@@ -48,7 +48,7 @@ Changes made in **this fork** relative to upstream
 
 - `[pr_code_suggestions] commitable_code_suggestions = true` (was `false`): by
   default, `/improve` now posts suggestions as **inline line-anchored** comments
-  instead of a single summary table. Validated E2E on a real PR (no 422).
+  instead of a single summary table. Validated on a real PR.
 
 ### Planned
 
