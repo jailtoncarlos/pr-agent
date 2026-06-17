@@ -7,6 +7,16 @@ Changes made in **this fork** relative to upstream
 > change you make on top of upstream. Keep `LICENSE` and `NOTICE` intact; this file
 > is where "what we changed" is stated (Apache-2.0 §4(b)).
 
+## Unreleased — branch `docs/ci-quickstart`
+
+### Changed — docs
+
+- `docs/oauth-cli-mode.md` — turned the "Run as a GitHub Action" section into a
+  numbered **CI Quickstart** (symmetric with the MCP one): `claude setup-token` →
+  `gh secret set CLAUDE_CODE_OAUTH_TOKEN` → drop the workflow **pinned to a SHA**
+  (not `@main` — supply-chain) → open a test PR and verify. Links the ready-made
+  example workflows and flags the Codex-in-CI ToS caveat.
+
 ## Unreleased — branch `feat/slim-cloud-deps`
 
 ### Changed — slim base install (cloud SDKs are now optional extras) ([#3](https://github.com/jailtoncarlos/pr-agent/issues/3))

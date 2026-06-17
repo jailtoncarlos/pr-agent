@@ -42,10 +42,28 @@ timeout_seconds = 300
 
 Then run as usual (e.g. `python -m pr_agent.cli --pr_url <URL> review`).
 
-## Run as a GitHub Action
+## Quickstart — CI (GitHub Action)
 
-This fork ships an `action.yml` (composite) that packages the reviewer. In any
-repo, `.github/workflows/pr-review.yml`:
+Goal: every PR in a repo gets reviewed automatically by a GitHub Action, running
+on your **Claude Max subscription** (no API key). The fork ships an `action.yml`
+(composite) that packages the reviewer.
+
+**1. Generate a subscription OAuth token** (the official Claude Code CI mechanism;
+tied to your Max subscription):
+
+```bash
+claude setup-token        # copy the token it prints
+```
+
+**2. Store it as a repository secret:**
+
+```bash
+gh secret set CLAUDE_CODE_OAUTH_TOKEN   # paste the token  (or: repo → Settings → Secrets → Actions)
+```
+
+**3. Add the workflow** `.github/workflows/pr-review.yml` — **pin to a commit SHA**,
+not `@main` (a moving ref is a supply-chain risk — you'd run whatever lands on the
+fork's main):
 
 ```yaml
 on: { pull_request: { types: [opened, synchronize, reopened] } }
@@ -54,15 +72,24 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: jailtoncarlos/pr-agent@<COMMIT_SHA>
+      - uses: jailtoncarlos/pr-agent@<COMMIT_SHA>   # pin a SHA, not @main
         with:
           cli_command: "claude -p"
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
 
-Ready-made examples: `docs/examples/single-repo-pr-review.yml` (single repo) and
-`docs/examples/org-anchor-reusable-workflow.yml` (org-wide governance from an
-anchor repo).
+(Get a SHA from the fork's commit history; bump it deliberately when you want updates.)
+
+**4. Open a test PR** and check the **Actions** tab — the `review` job runs and
+posts the review on the PR.
+
+Ready-made copies: [`docs/examples/single-repo-pr-review.yml`](examples/single-repo-pr-review.yml)
+(one repo) and [`docs/examples/org-anchor-reusable-workflow.yml`](examples/org-anchor-reusable-workflow.yml)
+(org-wide governance from an anchor repo).
+
+> **Codex instead of Claude in CI?** Set `cli_command: "codex exec"` and provide
+> the Codex credential — but headless Codex in CI is a **grayer ToS area** than
+> Claude's `setup-token`; see [CI auth caveats](#ci-auth-caveats) below.
 
 ## Where it runs — the subscription auth must be available in the environment
 
