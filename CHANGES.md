@@ -64,6 +64,11 @@ Changes made in **this fork** relative to upstream
   3-phase plug-in mapping and a code-grounded comparison of this fork vs. forje's
   in-house `LOCAL_AI_REVIEW` (flow / technology / technique).
 
+- `docs/oauth-cli-mode.md` — added "Output behavior" notes: **non-determinism**
+  in CLI mode (no seed/`response_format` on the subscription path) and
+  **suggestion volume** (`num_code_suggestions` is a ceiling shaped by
+  focus/score/inline-anchoring filters), with the knobs to get Copilot-like volume.
+
 ### Planned
 
 - End-to-end validation on a real PR — main risk is structured-output reliability
