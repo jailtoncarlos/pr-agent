@@ -27,10 +27,19 @@ classifiers = [
 ]
 dynamic = ["dependencies"]
 
-# Fork extras. The MCP local server (pr-agent-mcp) is optional:
-#   pip install "pr-agent[mcp]"
+# Fork extras. The base install stays slim (GitHub + OpenAI/Anthropic API, or the
+# CLI/OAuth subscription handler). Heavy cloud SDKs are opt-in:
+#   pip install "pr-agent[mcp]"     # local MCP server
+#   pip install "pr-agent[aws]"     # AWS CodeCommit / Bedrock / Secrets Manager
+#   pip install "pr-agent[azure]"   # Azure DevOps / Azure OpenAI
+#   pip install "pr-agent[gcp]"     # Google Vertex AI / GCS secrets
+#   pip install "pr-agent[clouds]"  # all of the above cloud SDKs
 [project.optional-dependencies]
 mcp = ["mcp>=1.2"]
+aws = ["boto3==1.40.45"]
+azure = ["azure-devops==7.1.0b4", "azure-identity==1.25.0"]
+gcp = ["google-cloud-aiplatform==1.154.0", "google-cloud-storage==2.10.0"]
+clouds = ["pr-agent[aws,azure,gcp]"]
 
 
 [tool.setuptools.dynamic]

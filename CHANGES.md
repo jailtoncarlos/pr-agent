@@ -7,6 +7,27 @@ Changes made in **this fork** relative to upstream
 > change you make on top of upstream. Keep `LICENSE` and `NOTICE` intact; this file
 > is where "what we changed" is stated (Apache-2.0 §4(b)).
 
+## Unreleased — branch `feat/slim-cloud-deps`
+
+### Changed — slim base install (cloud SDKs are now optional extras) ([#3](https://github.com/jailtoncarlos/pr-agent/issues/3))
+
+- `requirements.txt` — removed `boto3`, `azure-devops`, `azure-identity`,
+  `google-cloud-aiplatform`, `google-cloud-storage` from the **base** install.
+  The common path (GitHub + OpenAI/Anthropic API, or the CLI/OAuth subscription
+  handler) doesn't use them, and they made the install heavy/slow.
+- `pyproject.toml` — added extras: `pr-agent[aws]` / `[azure]` / `[gcp]` /
+  `[clouds]`. Install them only if you use AWS CodeCommit/Bedrock, Azure
+  DevOps/OpenAI, or Vertex AI/GCS.
+- `pr_agent/git_providers/codecommit_client.py` — guarded the top-level
+  `import boto3` (the one unguarded cloud import on the default path). Without it,
+  `import pr_agent.git_providers` crashed on a slim install. Using CodeCommit
+  without boto3 now raises a clear "install `pr-agent[aws]`" message.
+  (`azuredevops_provider` already guards its import; the secret providers import
+  lazily.)
+- Validated: with the five SDKs **uninstalled**, `import litellm`,
+  `pr_agent.cli`, the git providers, and both AI handlers import cleanly
+  (litellm guards its own optional provider SDKs).
+
 ## Unreleased — branch `docs/mcp-usage-guide`
 
 ### Changed — docs
