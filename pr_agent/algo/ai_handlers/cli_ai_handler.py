@@ -24,10 +24,10 @@ execution on the runner. Two defenses:
 1. The configured command is preferred from the **trusted environment**
    (``PR_AGENT_CLI_COMMAND``, set by the operator/workflow) over the merged
    settings (which a repo file can influence).
-2. The resolved **executable is allowlisted** (default ``claude`` / ``codex``).
-   Anything else is refused. Extend the allowlist only via the trusted env var
-   ``PR_AGENT_CLI_ALLOWED_COMMANDS`` (comma-separated basenames) — never from
-   repo config.
+2. The resolved **executable is allowlisted** (default ``claude`` / ``codex`` /
+   ``gemini``). Anything else is refused. Extend the allowlist only via the
+   trusted env var ``PR_AGENT_CLI_ALLOWED_COMMANDS`` (comma-separated basenames)
+   — never from repo config.
 """
 import asyncio
 import contextlib
@@ -41,7 +41,7 @@ from pr_agent.log import get_logger
 # Executable basenames this handler is allowed to run. Closes the RCE where a
 # per-repo `.pr_agent.toml` overrides `[cli_ai] command` with an arbitrary
 # binary. Extend ONLY via the trusted env var PR_AGENT_CLI_ALLOWED_COMMANDS.
-_DEFAULT_ALLOWED_COMMANDS = ("claude", "codex")
+_DEFAULT_ALLOWED_COMMANDS = ("claude", "codex", "gemini")
 
 
 def _allowed_commands() -> set[str]:

@@ -35,7 +35,7 @@ dynamic = ["dependencies"]
 #   pip install "pr-agent[gcp]"     # Google Vertex AI / GCS secrets
 #   pip install "pr-agent[clouds]"  # all of the above cloud SDKs
 [project.optional-dependencies]
-mcp = ["mcp>=1.2"]
+mcp = ["mcp>=1.2", "uvicorn>=0.31.1"]
 aws = ["boto3==1.40.45"]
 azure = ["azure-devops==7.1.0b4", "azure-identity==1.25.0"]
 gcp = ["google-cloud-aiplatform==1.154.0", "google-cloud-storage==2.10.0"]
