@@ -63,6 +63,7 @@ include = [
 [project.scripts]
 pr-agent = "pr_agent.cli:run"
 pr-agent-mcp = "pr_agent.servers.mcp_server:main"
+pr-agent-mcp-http = "pr_agent.servers.mcp_http_server:main"
 
 [tool.ruff]
 line-length = 120
