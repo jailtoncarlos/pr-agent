@@ -31,6 +31,9 @@ class TestCommandResolution:
         argv = _handler("codex exec")._resolve_argv()
         assert argv[0] == "codex" and "--skip-git-repo-check" in argv
 
+    def test_gemini_resolves(self):
+        assert _handler("gemini --prompt")._resolve_argv() == ["gemini", "--prompt"]
+
     def test_empty_command_raises(self):
         with pytest.raises(ValueError):
             _handler("   ")._resolve_argv()

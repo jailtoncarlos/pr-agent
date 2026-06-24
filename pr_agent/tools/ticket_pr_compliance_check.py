@@ -162,7 +162,8 @@ async def extract_tickets(git_provider):
                                 sub_issues_content.append({
                                     'ticket_url': sub_issue_url,
                                     'title': sub_issue.title,
-                                    'body': sub_body
+                                    'body': sub_body,
+                                    'labels': '',
                                 })
                             except Exception as e:
                                 get_logger().warning(f"Failed to fetch sub-issue content for {sub_issue_url}: {e}")
@@ -235,8 +236,12 @@ async def extract_and_cache_pr_tickets(git_provider, vars):
             for ticket in tickets_content:
                 if "sub_issues" in ticket and ticket["sub_issues"]:
                     for sub_issue in ticket["sub_issues"]:
+                        sub_issue.setdefault("labels", "")
+                        sub_issue.setdefault("requirements", "")
                         related_tickets.append(sub_issue)  # Add sub-issues content
 
+                ticket.setdefault("labels", "")
+                ticket.setdefault("requirements", "")
                 related_tickets.append(ticket)
 
             get_logger().info("Extracted tickets and sub-issues from PR description",

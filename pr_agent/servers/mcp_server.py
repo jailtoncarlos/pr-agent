@@ -35,6 +35,7 @@ except ImportError as exc:  # pragma: no cover - import-time guard
     ) from exc
 
 from pr_agent.agent.pr_agent import PRAgent
+from pr_agent.algo.ai_handlers.base_ai_handler import BaseAiHandler
 from pr_agent.config_loader import get_settings
 from pr_agent.log import get_logger
 
@@ -71,6 +72,23 @@ def _configure() -> None:
         settings.set("GITHUB.USER_TOKEN", token)
 
 
+def _ai_handler() -> type[BaseAiHandler] | None:
+    """Return an explicit handler for modes that must survive repo settings.
+
+    ``PRAgent`` resolves the handler during construction, before per-repo
+    ``.pr_agent.toml`` files are merged. Passing the CLI handler explicitly makes
+    the MCP server honor its trusted environment even if later settings are
+    applied while handling the PR.
+    """
+    handler = os.environ.get("PR_AGENT_AI_HANDLER", "cli").lower()
+    if handler != "cli":
+        return None
+
+    from pr_agent.algo.ai_handlers.cli_ai_handler import CliAiHandler
+
+    return CliAiHandler
+
+
 _RESULT_NOUN = {
     "review": "a review",
     "improve": "code suggestions",
@@ -92,7 +110,7 @@ async def _run(pr_url: str, command: list[str]) -> str:
         # PRAgent.__init__ from CONFIG.AI_HANDLER.
         _configure()
         get_logger().info(f"MCP: running {command} on {pr_url}")
-        ok = await PRAgent().handle_request(pr_url, command)
+        ok = await PRAgent(ai_handler=_ai_handler()).handle_request(pr_url, command)
     except Exception as exc:
         get_logger().error(f"MCP request failed: {exc}")
         return f"Error posting {noun} on {pr_url}: {exc}"
